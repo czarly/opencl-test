@@ -1,5 +1,8 @@
 typedef unsigned char uint8_t;
 #define uint32_t unsigned int
+#define bool int
+#define true 1
+#define false 0
 
 inline uint32_t right_rot(uint32_t value, unsigned int count)
 {

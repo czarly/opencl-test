@@ -22,6 +22,9 @@
 #define ITEM_COUNT 100000//0
 #define START_COUNT 10000//00
 
+#define bool int
+#define true 1
+#define false 0
 
 void plain(const uint8_t *bits, const uint8_t *size, uint8_t *result);
 void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result);
