@@ -157,7 +157,8 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
     char *source_str;
     size_t source_size;
     
-    fp = fopen("/Users/sebastian/repos/Xcode Workspace/OpenCL Test/OpenCL Test/sha256_kernel.cl", "r");
+    ///Users/sebastian/repos/Xcode Workspace/OpenCL Test/OpenCL Test/
+    fp = fopen("sha256_kernel.cl", "r");
     if (!fp) {
         fprintf(stderr, "Failed to load kernel.\n");
         exit(1);
@@ -190,26 +191,64 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
     
     // Create an OpenCL context
     cl_context context = clCreateContext( NULL, 1, &device_id, NULL, NULL, &ret);
+
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to create context! %d\n", ret);
+        exit(1);
+    }
     
     // Create a command queue
     cl_command_queue command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
 
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to create command queue! %d\n", ret);
+        exit(1);
+    }
+    
     uint8_t z = 64;
     
     // Create memory buffers on the device for each vector
     cl_mem a_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
                                       ITEM_COUNT * 64 * sizeof(uint8_t), NULL, &ret);
+    
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to create buffer for a! %d\n", ret);
+        exit(1);
+    }
+    
     cl_mem b_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
                                       1 * sizeof(uint8_t), NULL, &ret);
+    
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to create buffer for b! %d\n", ret);
+        exit(1);
+    }
+
     cl_mem c_mem_obj = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
                                       32 * sizeof(uint8_t), NULL, &ret);
+    
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to create buffer for c! %d\n", ret);
+        exit(1);
+    }
+
     
     
     // Copy the lists A and B to their respective memory buffers
     ret = clEnqueueWriteBuffer(command_queue, a_mem_obj, CL_TRUE, 0,
                                ITEM_COUNT * 64 * sizeof(uint8_t), bits, 0, NULL, NULL);
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to write bits to buffer! %d\n", ret);
+        exit(1);
+    }
+    
     ret = clEnqueueWriteBuffer(command_queue, b_mem_obj, CL_TRUE, 0,
                                1 * sizeof(uint8_t), &z, 0, NULL, NULL);
+    
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to write size! %d\n", ret);
+        exit(1);
+    }
     
     // Create a program from the kernel source
     cl_program program = clCreateProgramWithSource(context, 1,
@@ -218,13 +257,36 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
     // Build the program
     ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
     
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to build kernel program! %d\n", ret);
+        exit(1);
+    }
+    
     // Create the OpenCL kernel
     cl_kernel kernel = clCreateKernel(program, "hash", &ret);
     
     // Set the arguments of the kernel
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&a_mem_obj);
+    
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to set kernel arg a! %d\n", ret);
+        exit(1);
+    }
+    
     ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&b_mem_obj);
+    
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to set kernel arg b! %d\n", ret);
+        exit(1);
+    }
+
     ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&c_mem_obj);
+    
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to set kernel arg c! %d\n", ret);
+        exit(1);
+    }
+
     
     // Execute the OpenCL kernel on the list
     size_t global_item_size = ITEM_COUNT; // Process the entire lists
