@@ -19,8 +19,9 @@
 #define USE_PLAIN 1
 #define USE_CL 2
 
-#define ITEM_COUNT 100000//0
+#define ITEM_COUNT 90000//0
 #define START_COUNT 10000//00
+#define SUFFIX_COUNT 5
 
 #define bool int
 #define true 1
@@ -31,20 +32,22 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result);
 
 void generateText(char *prefix, long amount, uint8_t * result){
     int len = strlen(prefix);
+    int size;
+    
+    if (amount == 1){
+        uint8_t *msg = prepareMessage(prefix, len, &size);
+        memcpy(result, msg, size);
+        return;
+    }
     
     for (long i=START_COUNT; i<START_COUNT+amount; i++){
         char* buf[len+4];
         sprintf(buf, "%s%ld", prefix, i);
-        int size;
-        uint8_t *msg = prepareMessage(buf, len+3, &size);
+        uint8_t *msg = prepareMessage(buf, len+SUFFIX_COUNT, &size);
         //printf("%s - %d\n", buf, size);
         memcpy(result+((i-START_COUNT)*64*sizeof(uint8_t)), msg, size*sizeof(uint8_t));
         free(msg);
     }
-    
-    // return result;
-    //int size;
-    //return prepareMessage(prefix, len, &size);
 }
 
 bool success(uint8_t *result){

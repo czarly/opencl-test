@@ -3,6 +3,7 @@ typedef unsigned char uint8_t;
 #define bool int
 #define true 1
 #define false 0
+#define DEBUG 0
 
 inline uint32_t right_rot(uint32_t value, unsigned int count)
 {
@@ -50,7 +51,7 @@ __kernel void hash(__global const uint8_t *bits, __global const uint8_t *length,
         __global const uint8_t *p = bits + (n * 64) + (x * 64); // chunk is bits + (i * 64) {the chunk} + (x * 64) the offset for the workgroup
         int i;
         
-        memset(w, 0x00, sizeof w);
+        //memset(w, 0x00, sizeof w);
         for (i = 0; i < 16; i++) {
             w[i] = (uint32_t) p[0] << 24 | (uint32_t) p[1] << 16 |
             (uint32_t) p[2] << 8 | (uint32_t) p[3];
@@ -110,7 +111,7 @@ __kernel void hash(__global const uint8_t *bits, __global const uint8_t *length,
     
     bool test = (hi[0] >> 24) == 0 && (hi[0] >> 16) == 0 && (hi[0] >> 8) == 0;// && hi[0] == 0;
     
-    if (test) {
+    if (test || DEBUG) {
     
         /* Produce the final hash value (big-endian): */
         result[0] = (uint8_t) (hi[0] >> 24);
