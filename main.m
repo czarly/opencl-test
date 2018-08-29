@@ -194,19 +194,19 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
     uint8_t z = 64;
     
     // Create memory buffers on the device for each vector
-    cl_mem a_mem_obj = clCreateBuffer(context, CL_MEM_USE_HOST_PTR,
-                                      ITEM_COUNT * 64 * sizeof(uint8_t), bits, &ret);
-    cl_mem b_mem_obj = clCreateBuffer(context, /*CL_MEM_READ_ONLY*/ CL_MEM_USE_HOST_PTR,
-                                      1 * sizeof(uint8_t), &z, &ret);
+    cl_mem a_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
+                                      ITEM_COUNT * 64 * sizeof(uint8_t), NULL, &ret);
+    cl_mem b_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
+                                      1 * sizeof(uint8_t), NULL, &ret);
     cl_mem c_mem_obj = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
                                       32 * sizeof(uint8_t), NULL, &ret);
     
     
     // Copy the lists A and B to their respective memory buffers
-    //ret = clEnqueueWriteBuffer(command_queue, a_mem_obj, CL_TRUE, 0,
-    //                           ITEM_COUNT * 64 * sizeof(uint8_t), bits, 0, NULL, NULL);
-    //ret = clEnqueueWriteBuffer(command_queue, b_mem_obj, CL_TRUE, 0,
-    //                           1 * sizeof(uint8_t), &z, 0, NULL, NULL);
+    ret = clEnqueueWriteBuffer(command_queue, a_mem_obj, CL_TRUE, 0,
+                               ITEM_COUNT * 64 * sizeof(uint8_t), bits, 0, NULL, NULL);
+    ret = clEnqueueWriteBuffer(command_queue, b_mem_obj, CL_TRUE, 0,
+                               1 * sizeof(uint8_t), &z, 0, NULL, NULL);
     
     // Create a program from the kernel source
     cl_program program = clCreateProgramWithSource(context, 1,
