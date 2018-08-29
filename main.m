@@ -157,8 +157,13 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
     char *source_str;
     size_t source_size;
     
-    ///Users/sebastian/repos/Xcode Workspace/OpenCL Test/OpenCL Test/
-    fp = fopen("sha256_kernel.cl", "r");
+    #ifdef __APPLE__
+    char* kernel_path = "/Users/sebastian/repos/Xcode Workspace/OpenCL Test/OpenCL Test/sha256_kernel.cl";
+    #else
+    char* kernel_path = "sha256_kernel.cl";
+    #endif
+    
+    fp = fopen(kernel_path, "r");
     if (!fp) {
         fprintf(stderr, "Failed to load kernel.\n");
         exit(1);
