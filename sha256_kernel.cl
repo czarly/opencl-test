@@ -154,7 +154,7 @@ __kernel void hash(__global const uint8_t *bits, __global const uint8_t *length,
     }
 
     // also check that not everything in the result is 0
-    if (valid && final[31] != 0){
+    if (valid /*&& final[31] != 0*/){
         results[x] = 1;
         // we could break here but i don't know how to be honest
     }

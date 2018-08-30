@@ -61,7 +61,7 @@ bool success(uint8_t *result, uint8_t *target){
     }
     
     // also check that not everything in the result is 0
-    return valid && result[31] != 0;
+    return valid;// && result[31] != 0;
 }
 
 int firstMatch(int* matches, int length){
