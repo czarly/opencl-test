@@ -387,6 +387,7 @@ void cl(const uint8_t *bits, const int *count, const uint8_t *length, const uint
     ret = clReleaseMemObject(a_mem_obj);
     ret = clReleaseMemObject(b_mem_obj);
     ret = clReleaseMemObject(c_mem_obj);
+    ret = clReleaseMemObject(length_mem_obj);
     ret = clReleaseCommandQueue(command_queue);
     ret = clReleaseContext(context);
 }
