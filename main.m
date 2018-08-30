@@ -22,16 +22,17 @@
 #define ITEM_COUNT 90000//0
 #define START_COUNT 10000//00
 #define SUFFIX_COUNT 5
+#define TARGET 4
 
-#define bool int
+#define bool char
 #define true 1
 #define false 0
 
 void plain(const uint8_t *bits, const uint8_t *size, uint8_t *result);
-void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result);
+void cl(const uint8_t *bits, const int *count, const uint8_t *length, const uint8_t *target, int *results);
 
-void generateText(char *prefix, long amount, uint8_t * result){
-    int len = strlen(prefix);
+void generateText(char *prefix, int amount, uint8_t * result){
+    size_t len = strlen(prefix);
     int size;
     
     if (amount == 1){
@@ -40,75 +41,88 @@ void generateText(char *prefix, long amount, uint8_t * result){
         return;
     }
     
-    for (long i=START_COUNT; i<START_COUNT+amount; i++){
+    int k=0;
+    
+    for (int i=START_COUNT; i<START_COUNT+amount; i++){
         char* buf[len+4];
         sprintf(buf, "%s%ld", prefix, i);
         uint8_t *msg = prepareMessage(buf, len+SUFFIX_COUNT, &size);
-        //printf("%s - %d\n", buf, size);
+        //printf("%d) %s\n", k, buf);
         memcpy(result+((i-START_COUNT)*64*sizeof(uint8_t)), msg, size*sizeof(uint8_t));
         free(msg);
+        k++;
     }
 }
 
-bool success(uint8_t *result){
-    return result[0] == 0 && result[1] == 0 && result[2] == 0 && result[31] != 0;
+bool success(uint8_t *result, uint8_t *target){
+    bool valid = true;
+    for (int i=0; i<*target; i++){
+        valid = valid && result[i] == 0;
+    }
+    
+    // also check that not everything in the result is 0
+    return valid && result[31] != 0;
 }
 
-bool try(char * msg){
+int firstMatch(int* matches, int length){
+    for (int i=0; i<length; i++){
+        if (matches[i]) return i;
+    }
     
-    int mode = USE_CL;
-    clock_t t;
+    return -1;
+}
+
+bool try(char *msg, uint8_t *target){
     
-    //printf("try to append text to %s\n", msg);
+    // the length of each item to be hashed.
+    // please let it be the same for every item in the list.
+    // if not at least every nonce will have the same length anyway
+    uint8_t length = 64;
+    int count = ITEM_COUNT;
     
-    uint8_t size = 64;
-    
-    uint8_t * bits = malloc(size*ITEM_COUNT*sizeof(uint8_t));
-    t = clock();
+    uint8_t *bits = malloc(length*ITEM_COUNT*sizeof(uint8_t));
     generateText(msg, ITEM_COUNT, bits);
-    t = clock() - t;
-    double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
     
-    //printf("generating the text took %f seconds to execute \n", time_taken);
+    int *matches = (int*)malloc(sizeof(int)*count);
+    
+    cl(bits,&count,&length,target,matches);
+    
+    // printf("have a match %d", *match);
+    
+    int match = firstMatch(matches, count);
+    
+    if (match > -1){
+    
+        // check result
+        uint8_t *result = (uint8_t*)malloc(sizeof(uint8_t)*32);
+    
+        plain(bits+(match * length),&length,result);
 
-    uint8_t *result = (uint8_t*)malloc(sizeof(uint8_t)*32);
+        bool finished = success(result, target);
     
-    if (mode == USE_PLAIN){
-        t = clock();
-        for (int z=0; z < ITEM_COUNT; z++){
-            plain(bits+(z*64*sizeof(uint8_t)),&size,result);
-            if(success(result)) break;
+        if( finished ) {
+            for(int i=0; i<32; i++){
+                printf("\n%d) value:\t%" PRIu8 " ", i, result[i]);
+                printf("%x\n", result[i]);
+                printBits(sizeof(result[i]), &result[i]);
+            }
+        } else if (!finished) {
+            printf("oh shit the calculations by the cpu and the gpu do not match ...");
         }
-        t = clock() - t;
-        double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
-        
-        //printf("hashing with CPU took %f seconds to execute \n", time_taken);
-    } else if (mode == USE_CL){
-        t = clock();
-        cl(bits,&size,result);
-        t = clock() - t;
-        double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
-        
-        //printf("hashing with GPU took %f seconds to execute \n", time_taken);
-    }
-
-    //printf("my result is %d at the end!\n", result[31]);
-
-    bool finished = success(result);
     
-    if( finished ) {
-        for(int i=0; i<32; i++){
-            printf("\n%d) value:\t%" PRIu8 " ", i, result[i]);
-            printf("%x\n", result[i]);
-            printBits(sizeof(result[i]), &result[i]);
-        }
+        // cleanup
+        free(result);
+        free(matches);
+        free(bits);
+        
+        return true;
     }
     
     // cleanup
     free(bits);
-    free(result);
+    free(matches);
     
-    return finished;
+    return false;
 }
 
 
@@ -116,22 +130,25 @@ int main(void) {
     
     bool result = false;
     char * prefix = {"abc"};
-    int len = strlen(prefix);
+    size_t len = strlen(prefix);
+    
+    uint8_t *target = (uint8_t*)malloc(sizeof(uint8_t)*1);
+    
+    *target = (uint8_t) TARGET;
     
     clock_t t;
     t = clock();
     
     printf("start hashing");
     
-    int start = 100000;
+    int start = 10000;
     int i;
     
-    for (i=start; i<10*start; i++){
+    for (i=start; i<9*start; i++){
         char* buf[len+6];
-        
         sprintf(buf, "%s%d", prefix, i);
-        result = try(buf);
-        
+        result = try(buf, target);
+        printf("\n\nfinished %d rounds \n", (i-start));
         if(result) break;
     }
     
@@ -148,12 +165,10 @@ void plain(const uint8_t *bits, const uint8_t *size, uint8_t *result){
     hash(bits,size,result);
 }
 
-void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
+void cl(const uint8_t *bits, const int *count, const uint8_t *length, const uint8_t *target, int *results){
     
-    const uint8_t *mysize = (uint8_t) 2;
-    //printf("starting to push a list of %d hashes \n", ITEM_COUNT - START_COUNT);
-    
-    uint8_t *length = (uint8_t*)malloc(sizeof(uint8_t)*1); // I have currently only 1 item in my list
+    // I just only want to know how many zeros i need
+    // later i might use the real target for comparrisson
     
     // Load the kernel source code into the array source_str
     FILE *fp;
@@ -213,16 +228,25 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
         exit(1);
     }
     
-    uint8_t z = 64;
+    uint8_t z = *length;
     
     // Create memory buffers on the device for each vector
     cl_mem a_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
-                                      ITEM_COUNT * 64 * sizeof(uint8_t), NULL, &ret);
+                                      *count * z * sizeof(uint8_t), NULL, &ret);
     
     if (ret != CL_SUCCESS) {
         printf("Error: Failed to create buffer for a! %d\n", ret);
         exit(1);
     }
+
+    cl_mem length_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
+                                      1 * sizeof(uint8_t), NULL, &ret);
+    
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to create buffer for length! %d\n", ret);
+        exit(1);
+    }
+
     
     cl_mem b_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
                                       1 * sizeof(uint8_t), NULL, &ret);
@@ -233,7 +257,7 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
     }
 
     cl_mem c_mem_obj = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-                                      32 * sizeof(uint8_t), NULL, &ret);
+                                      *count * sizeof(int), NULL, &ret);
     
     if (ret != CL_SUCCESS) {
         printf("Error: Failed to create buffer for c! %d\n", ret);
@@ -244,17 +268,25 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
     
     // Copy the lists A and B to their respective memory buffers
     ret = clEnqueueWriteBuffer(command_queue, a_mem_obj, CL_TRUE, 0,
-                               ITEM_COUNT * 64 * sizeof(uint8_t), bits, 0, NULL, NULL);
+                               *count * z * sizeof(uint8_t), bits, 0, NULL, NULL);
     if (ret != CL_SUCCESS) {
         printf("Error: Failed to write bits to buffer! %d\n", ret);
         exit(1);
     }
-    
-    ret = clEnqueueWriteBuffer(command_queue, b_mem_obj, CL_TRUE, 0,
+
+    ret = clEnqueueWriteBuffer(command_queue, length_mem_obj, CL_TRUE, 0,
                                1 * sizeof(uint8_t), &z, 0, NULL, NULL);
     
     if (ret != CL_SUCCESS) {
-        printf("Error: Failed to write size! %d\n", ret);
+        printf("Error: Failed to write length! %d\n", ret);
+        exit(1);
+    }
+    
+    ret = clEnqueueWriteBuffer(command_queue, b_mem_obj, CL_TRUE, 0,
+                               1 * sizeof(uint8_t), target, 0, NULL, NULL);
+    
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to write target! %d\n", ret);
         exit(1);
     }
     
@@ -264,6 +296,21 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
     
     // Build the program
     ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+    
+    if (ret == CL_BUILD_PROGRAM_FAILURE) {
+        // Determine the size of the log
+        size_t log_size;
+        clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+        
+        // Allocate memory for the log
+        char *log = (char *) malloc(log_size);
+        
+        // Get the log
+        clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+        
+        // Print the log
+        printf("\n%s\n", log);
+    }
     
     if (ret != CL_SUCCESS) {
         printf("Error: Failed to build kernel program! %d\n", ret);
@@ -280,24 +327,38 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
         printf("Error: Failed to set kernel arg a! %d\n", ret);
         exit(1);
     }
+
+    ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&length_mem_obj);
     
-    ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&b_mem_obj);
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to set kernel arg length! %d\n", ret);
+        exit(1);
+    }
+    
+    ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&b_mem_obj);
     
     if (ret != CL_SUCCESS) {
         printf("Error: Failed to set kernel arg b! %d\n", ret);
         exit(1);
     }
 
-    ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&c_mem_obj);
+    ret = clSetKernelArg(kernel, 3, 32*sizeof(uint8_t), NULL);
+    
+    if (ret != CL_SUCCESS) {
+        printf("Error: Failed to set the local array buffer! %d\n", ret);
+        exit(1);
+    }
+    
+    ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), (void *)&c_mem_obj);
     
     if (ret != CL_SUCCESS) {
         printf("Error: Failed to set kernel arg c! %d\n", ret);
         exit(1);
     }
-
+    
     
     // Execute the OpenCL kernel on the list
-    size_t global_item_size = ITEM_COUNT; // Process the entire lists
+    size_t global_item_size = *count; // Process the entire lists
     size_t local_item_size = 1; //*size; // Divide work items into groups of 64
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
                                  &global_item_size, &local_item_size, 0, NULL, NULL);
@@ -311,13 +372,13 @@ void cl(const uint8_t *bits, const uint8_t *size, uint8_t *result){
     
     // Read the memory buffer C on the device to the local variable C
     ret = clEnqueueReadBuffer(command_queue, c_mem_obj, CL_TRUE, 0,
-                              32 * sizeof(uint8_t), result, 0, NULL, NULL);
+                              *count * sizeof(int), results, 0, NULL, NULL);
     
     if (ret != CL_SUCCESS) {
         printf("Error: Failed to read buffer! %d\n", ret);
         exit(1);
     }
-    
+        
     // Clean up
     ret = clFlush(command_queue);
     ret = clFinish(command_queue);

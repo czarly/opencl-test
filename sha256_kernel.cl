@@ -1,6 +1,6 @@
 typedef unsigned char uint8_t;
 #define uint32_t unsigned int
-#define bool int
+#define bool char
 #define true 1
 #define false 0
 #define DEBUG 0
@@ -15,7 +15,8 @@ inline uint32_t right_rot(uint32_t value, unsigned int count)
     return value >> count | value << (32 - count);
 }
 
-__kernel void hash(__global const uint8_t *bits, __global const uint8_t *length, __global uint8_t *result) {
+// make sure to go through the code before making lenght anything else but 64!
+__kernel void hash(__global const uint8_t *bits, __global const uint8_t *length, __global const uint8_t *target, __local uint8_t *final, __global int *results) {
     
     int x = get_global_id(0);
     int y = get_local_id(0);
@@ -105,48 +106,92 @@ __kernel void hash(__global const uint8_t *bits, __global const uint8_t *length,
         hi[7] = hi[7] + h;
     }
     
-    //printf("%d\n", hi[0]);
-    
-    //uint8_t hash[32];
-    
-    bool test = (hi[0] >> 24) == 0 && (hi[0] >> 16) == 0 && (hi[0] >> 8) == 0;// && hi[0] == 0;
-    
-    if (test || DEBUG) {
-    
-        /* Produce the final hash value (big-endian): */
-        result[0] = (uint8_t) (hi[0] >> 24);
-        result[1] = (uint8_t) (hi[0] >> 16);
-        result[2] = (uint8_t) (hi[0] >> 8);
-        result[3] = (uint8_t) hi[0];
-        result[4] = (uint8_t) (hi[1] >> 24);
-        result[5] = (uint8_t) (hi[1] >> 16);
-        result[6] = (uint8_t) (hi[1] >> 8);
-        result[7] = (uint8_t) hi[1];
-        result[8] = (uint8_t) (hi[2] >> 24);
-        result[9] = (uint8_t) (hi[2] >> 16);
-        result[10] = (uint8_t) (hi[2] >> 8);
-        result[11] = (uint8_t) hi[2];
-        result[12] = (uint8_t) (hi[3] >> 24);
-        result[13] = (uint8_t) (hi[3] >> 16);
-        result[14] = (uint8_t) (hi[3] >> 8);
-        result[15] = (uint8_t) hi[3];
-        result[16] = (uint8_t) (hi[4] >> 24);
-        result[17] = (uint8_t) (hi[4] >> 16);
-        result[18] = (uint8_t) (hi[4] >> 8);
-        result[19] = (uint8_t) hi[4];
-        result[20] = (uint8_t) (hi[5] >> 24);
-        result[21] = (uint8_t) (hi[5] >> 16);
-        result[22] = (uint8_t) (hi[5] >> 8);
-        result[23] = (uint8_t) hi[5];
-        result[24] = (uint8_t) (hi[6] >> 24);
-        result[25] = (uint8_t) (hi[6] >> 16);
-        result[26] = (uint8_t) (hi[6] >> 8);
-        result[27] = (uint8_t) hi[6];
-        result[28] = (uint8_t) (hi[7] >> 24);
-        result[29] = (uint8_t) (hi[7] >> 16);
-        result[30] = (uint8_t) (hi[7] >> 8);
-        result[31] = (uint8_t) hi[7];
+
+    /* Produce the final hash value (big-endian): */
+    // uint8_t *final = (uint8_t*)malloc(sizeof(uint8_t)*32);
+    // apparently i can't create arrays inside the kernel
+    // but i can hand him a local parameter while creating the context
+
+    final[0] = (uint8_t) (hi[0] >> 24);
+    final[1] = (uint8_t) (hi[0] >> 16);
+    final[2] = (uint8_t) (hi[0] >> 8);
+    final[3] = (uint8_t) hi[0];
+    final[4] = (uint8_t) (hi[1] >> 24);
+    final[5] = (uint8_t) (hi[1] >> 16);
+    final[6] = (uint8_t) (hi[1] >> 8);
+    final[7] = (uint8_t) hi[1];
+    final[8] = (uint8_t) (hi[2] >> 24);
+    final[9] = (uint8_t) (hi[2] >> 16);
+    final[10] = (uint8_t) (hi[2] >> 8);
+    final[11] = (uint8_t) hi[2];
+    final[12] = (uint8_t) (hi[3] >> 24);
+    final[13] = (uint8_t) (hi[3] >> 16);
+    final[14] = (uint8_t) (hi[3] >> 8);
+    final[15] = (uint8_t) hi[3];
+    final[16] = (uint8_t) (hi[4] >> 24);
+    final[17] = (uint8_t) (hi[4] >> 16);
+    final[18] = (uint8_t) (hi[4] >> 8);
+    final[19] = (uint8_t) hi[4];
+    final[20] = (uint8_t) (hi[5] >> 24);
+    final[21] = (uint8_t) (hi[5] >> 16);
+    final[22] = (uint8_t) (hi[5] >> 8);
+    final[23] = (uint8_t) hi[5];
+    final[24] = (uint8_t) (hi[6] >> 24);
+    final[25] = (uint8_t) (hi[6] >> 16);
+    final[26] = (uint8_t) (hi[6] >> 8);
+    final[27] = (uint8_t) hi[6];
+    final[28] = (uint8_t) (hi[7] >> 24);
+    final[29] = (uint8_t) (hi[7] >> 16);
+    final[30] = (uint8_t) (hi[7] >> 8);
+    final[31] = (uint8_t) hi[7];
+
+
+    // test if the result is conform to what i want
+
+    bool valid = true;
+    for (int i=0; i<*target; i++){
+        valid = valid && final[i] == 0;
+    }
+
+    // also check that not everything in the result is 0
+    if (valid && final[31] != 0){
+        results[x] = 1;
+        // we could break here but i don't know how to be honest
     }
     
+    if(valid && final[31] != 0){
+        // so we go on with debug output
+        printf("\nresulting hash: %d\n", x);
+        
+        for(int i=0; i<32; i++){
+            //printf("\n%d) value:\t%" PRIu8 " ", i, final[i]);
+            printf("%x", final[i]);
+            
+            /*int size = sizeof(final[i]);
+            uint8_t byte;
+            int i, j;
+            
+            for (i=size-1;i>=0;i--)
+            {
+                for (j=7;j>=0;j--)
+                {
+                    byte = (final[i] >> j) & 1;
+                    //printf("%u", byte);
+                }
+            }*/
+        }
+        
+        //__global const uint8_t *u = bits + (x * 64);
+        printf("\n and here the original:\n", x, y, z);
+        for(int k=0; k<64; k++){
+            printf("%x", bits[k+(x*64)]);
+        }
+        
+        printf("\n");
+    } else {
+        results[x] = 0;
+    }
 }
+
+
 
