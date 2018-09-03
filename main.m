@@ -24,7 +24,7 @@
 #define ITEM_COUNT 900000//0
 #define START_COUNT 100000//00
 #define SUFFIX_COUNT 6
-#define TARGET 3
+#define TARGET 4
 #define bool char
 #define true 1
 #define false 0
@@ -62,7 +62,7 @@ void generateWords(char *prefix, int amount, uint8_t * result){
     //int size;
     int k=0;
     
-    int length = len + 4;
+    int length = len + SUFFIX_COUNT;
     
     for (int i=START_COUNT; i<START_COUNT+amount; i++){
         char* buf[length];
@@ -148,11 +148,11 @@ void sha512_2(char *msg, size_t len, uint8_t *result){
     
     sha512_hash_2(msg, len, result);
     
-    for(int i=0; i<64; i++){
+    /*for(int i=0; i<64; i++){
         printf("\n%d) value:\t%" PRIu8 " ", i, result[i]);
         printf("%x\n", result[i]);
         printBits(sizeof(result[i]), &result[i]);
-    }
+    }*/
 }
 
 bool try(char *msg, uint8_t *target){
@@ -230,7 +230,7 @@ bool try512(char *msg, int length, uint8_t *target){
         // check result
         uint8_t *hash = (uint8_t*)malloc(sizeof(uint8_t)*64);
         
-        printf("check hash for match %d - %.10s", match, bits+(match * length));
+        printf("check hash for match %d - %.13s\n", match, bits+(match * length));
         
         sha512_2(bits+(match * length), length, hash);
         
@@ -238,9 +238,7 @@ bool try512(char *msg, int length, uint8_t *target){
         
         if( finished ) {
             for(int i=0; i<64; i++){
-                printf("\n%d) value:\t%" PRIu8 " ", i, hash[i]);
-                printf("%x\n", hash[i]);
-                printBits(sizeof(hash[i]), &hash[i]);
+                printf("%x", hash[i]);
             }
         } else if (!finished) {
             printf("oh shit the calculations by the cpu and the gpu do not match ...");
@@ -285,7 +283,7 @@ int main(void) {
     clock_t t;
     t = clock();
     
-    printf("start hashing");
+    printf("start hashing\n");
     
     // make the lenght exactly 10 for now
     int start = 1000;

@@ -148,7 +148,7 @@ void sha512_calc(const uint8_t *ptr, const size_t final_len, uint64_t *ctx)
     *(uint32_t*)(sha512_buf+120) = htonl(final_len >> 29);
     *(uint32_t*)(sha512_buf+124) = htonl(final_len <<  3);
     
-    for(int i=0; i<128; i++){
+    /*for(int i=0; i<128; i++){
         //printf("\n%d) value:\t%" PRIu8 " ", i, final[i]);
         printf("%x", sha512_buf[i]);
         
@@ -164,7 +164,7 @@ void sha512_calc(const uint8_t *ptr, const size_t final_len, uint64_t *ctx)
                 //printf("%u", byte);
             }
         }
-    }
+    }*/
     
     // and we'll update the context again, because this is what we want to output as the hash in the end.
     sha512_128(sha512_buf, ctx);
@@ -174,7 +174,7 @@ void sha512_hash_2(const uint8_t *bits, const size_t length, uint8_t *hash) {
     
     //printf("start %d\n", *length);
     
-    uint64_t h[] = {
+    /*uint64_t h[] = {
         0x6a09e667f3bcc908,
         0xbb67ae8584caa73b,
         0x3c6ef372fe94f82b,
@@ -183,6 +183,17 @@ void sha512_hash_2(const uint8_t *bits, const size_t length, uint8_t *hash) {
         0x9b05688c2b3e6c1f,
         0x1f83d9abfb41bd6b,
         0x5be0cd19137e2179
+    };*/
+    
+    uint64_t h[] = {
+        0xcbbb9d5dc1059ed8,
+        0x629a292a367cd507,
+        0x9159015a3070dd17,
+        0x152fecd8f70e5939,
+        0x67332667ffc00b31,
+        0x8eb44a8768581511,
+        0xdb0c2e0d64f98fa7,
+        0x47b5481dbefa4fa4
     };
     
     sha512_calc(bits, length, h);
@@ -253,14 +264,14 @@ void sha512_hash_2(const uint8_t *bits, const size_t length, uint8_t *hash) {
     hash[54] = (uint8_t) (h[6] >> 8);
     hash[55] = (uint8_t) h[6];
     
-    hash[56] = (uint8_t) (h[7] >> 56);
+    /*hash[56] = (uint8_t) (h[7] >> 56);
     hash[57] = (uint8_t) (h[7] >> 48);
     hash[58] = (uint8_t) (h[7] >> 40);
     hash[59] = (uint8_t) (h[7] >> 32);
     hash[60] = (uint8_t) (h[7] >> 24);
     hash[61] = (uint8_t) (h[7] >> 16);
     hash[62] = (uint8_t) (h[7] >> 8);
-    hash[63] = (uint8_t) h[7];
+    hash[63] = (uint8_t) h[7];*/
     
 }
 
