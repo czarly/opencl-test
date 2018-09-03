@@ -1,6 +1,6 @@
 //#include <string.h>
 //#include <stdio.h>
-#include "sha256.h"
+#include "sha224.h"
 
 typedef unsigned char uint8_t;
 #define uint32_t unsigned int
@@ -38,7 +38,7 @@ static void processChunk(uint8_t chunk[64], uint32_t hi[]){
     const uint8_t *p = chunk;
     int i;
     
-    //memset(w, 0x00, sizeof w);
+    // memset(w, 0x00, sizeof w); // not really needed
     for (i = 0; i < 16; i++) {
         w[i] = (uint32_t) p[0] << 24 | (uint32_t) p[1] << 16 |
         (uint32_t) p[2] << 8 | (uint32_t) p[3];
@@ -93,12 +93,13 @@ static void processChunk(uint8_t chunk[64], uint32_t hi[]){
     
 }
 
-static void processChunks(uint8_t *bits, uint8_t len, uint8_t hash[32]){
-    uint32_t h[] = { 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19 };
+static void processChunks(uint8_t *bits, uint8_t *len, uint8_t *hash){
+    //uint32_t h[] = { 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19 };
+    uint32_t h[] = { 0xc1059ed8, 0x367cd507, 0x3070dd17, 0xf70e5939, 0xffc00b31, 0x68581511, 0x64f98fa7, 0xbefa4fa4 };
     
     //printf("%d\n", h[0]);
     
-    for(int i=0; (i * 64) < len; i++){
+    for(int i=0; (i * 64) < *len; i++){
         processChunk(bits + i * 64, h);
     }
     
@@ -135,18 +136,18 @@ static void processChunks(uint8_t *bits, uint8_t len, uint8_t hash[32]){
     hash[25] = (uint8_t) (h[6] >> 16);
     hash[26] = (uint8_t) (h[6] >> 8);
     hash[27] = (uint8_t) h[6];
-    hash[28] = (uint8_t) (h[7] >> 24);
-    hash[29] = (uint8_t) (h[7] >> 16);
-    hash[30] = (uint8_t) (h[7] >> 8);
-    hash[31] = (uint8_t) h[7];
+    //hash[28] = (uint8_t) (h[7] >> 24);
+    //hash[29] = (uint8_t) (h[7] >> 16);
+    //hash[30] = (uint8_t) (h[7] >> 8);
+    //hash[31] = (uint8_t) h[7];
 }
 
 
-void sha256_hash(const uint8_t *bits, const uint8_t *length, uint8_t *result) {
+void sha224_hash(uint8_t *bits, uint8_t *length, uint8_t *result) {
     
     //printf("start %d\n", *length);
     
-    processChunks(bits, *length, result);
+    processChunks(bits, length, result);
     
 }
 
