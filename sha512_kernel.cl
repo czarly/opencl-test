@@ -8,13 +8,6 @@
 
 void sha512_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *ctx);
 
-/*inline uint64_t htonll(uint64_t x){
-    x = (x & 0x00000000FFFFFFFF) << 32 | (x & 0xFFFFFFFF00000000) >> 32;
-    x = (x & 0x0000FFFF0000FFFF) << 16 | (x & 0xFFFF0000FFFF0000) >> 16;
-    x = (x & 0x00FF00FF00FF00FF) << 8  | (x & 0xFF00FF00FF00FF00) >> 8;
-    return x;
-}*/
-
 inline uint32_t htonl(uint32_t x){
     uint32_t b0,b1,b2,b3;
     uint32_t res = 0;
