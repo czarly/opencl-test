@@ -68,8 +68,24 @@ inline void sha512_128(__global const uint8_t* msg, uint64_t* ctx)
     uint64_t w[80];
     
     /* copy chunk into first 16 words w[0..15] of the message schedule array */
-    for (i = 0; i < 16; ++i)
-        w[i] = htonll(*(uint64_t*)(msg+8*i));
+    /*for (i = 0; i < 16; ++i)
+        w[i] = htonll(*(uint64_t*)(msg+8*i));*/
+    
+    for (i = 0; i < 16; ++i){
+        uint8_t buf[8] = {
+            msg[8*i],
+            msg[8*i+1],
+            msg[8*i+2],
+            msg[8*i+3],
+            msg[8*i+4],
+            msg[8*i+5],
+            msg[8*i+6],
+            msg[8*i+7]
+        };
+        
+        // w[i] = htonll(*(uint64_t*)(msg+8*i));
+        w[i] = htonll(*(uint64_t*)buf);
+    }
     
     /* Extend the first 16 words into the remaining 48 words w[16..63] of the message schedule array: */
     for (i = 16; i < 80;  ++i) {
@@ -111,8 +127,21 @@ inline void sha512_128_local(const uint8_t* msg, uint64_t* ctx)
     uint64_t w[80];
     
     /* copy chunk into first 16 words w[0..15] of the message schedule array */
-    for (i = 0; i < 16; ++i)
-        w[i] = htonll(*(uint64_t*)(msg+8*i));
+    for (i = 0; i < 16; ++i){
+        uint8_t buf[8] = {
+            msg[8*i],
+            msg[8*i+1],
+            msg[8*i+2],
+            msg[8*i+3],
+            msg[8*i+4],
+            msg[8*i+5],
+            msg[8*i+6],
+            msg[8*i+7]
+        };
+        
+        // w[i] = htonll(*(uint64_t*)(msg+8*i));
+        w[i] = htonll(*(uint64_t*)buf);
+    }
     
     /* Extend the first 16 words into the remaining 48 words w[16..63] of the message schedule array: */
     for (i = 16; i < 80;  ++i) {
