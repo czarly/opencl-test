@@ -208,7 +208,13 @@ void sha512_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *
     
     // set the rest of the buffer to 0
     // it's not really needed it think, but lets leave it in for now
-    memset(sha512_buf+remain, 0, 128-remain);
+    // memset(sha512_buf+remain, 0, 128-remain);
+    
+    //gsus that looks stupid;
+    for(int z=remain;z<128-remain;z++){
+        sha512_buf[z] = 0;
+    }
+    
     //printf("remaining then: %.13s\n",sha512_buf);
     
     // and go on here. we add our binary 1 as terminator and then we copy the length in the last place of the chunk
@@ -218,7 +224,12 @@ void sha512_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *
         // if the remainder is too long to append the length after it in the same chunk we update the context 1 more round
         sha512_128_local(sha512_buf, ctx);
         // and 0 out the temporary buffer again up to the point where we wanna add the length information
-        memset(sha512_buf, 0, 116);
+        
+        //memset(sha512_buf, 0, 116);
+        //gsus that looks stupid;
+        for(int z=0;z<116;z++){
+            sha512_buf[z] = 0;
+        }
     }
     
     // finally we add the lenght information
