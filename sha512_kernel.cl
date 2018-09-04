@@ -262,28 +262,10 @@ void sha512_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *
     sha512_128_local(sha512_buf, ctx);
 }
 
-__kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *length, __global const uint8_t *target, __local uint8_t *_hash, __global int *results){
+__kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *length, __global const uint8_t *target, __global int *results){
     
     
     int x = get_global_id(0);
-    //int y = get_local_id(0);
-    //int z = get_group_id(0);
-
-    
-    //printf("start %d\n", *length);
-    
-    // sha512
-    
-    /*uint64_t h[] = {
-        0x6a09e667f3bcc908,
-        0xbb67ae8584caa73b,
-        0x3c6ef372fe94f82b,
-        0xa54ff53a5f1d36f1,
-        0x510e527fade682d1,
-        0x9b05688c2b3e6c1f,
-        0x1f83d9abfb41bd6b,
-        0x5be0cd19137e2179
-    };*/
     
     // sha384
     
@@ -369,17 +351,6 @@ __kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *l
     hash[54] = (uint8_t) (h[6] >> 8);
     hash[55] = (uint8_t) h[6];
     
-    // sha512
-    
-    /*hash[56] = (uint8_t) (h[7] >> 56);
-    hash[57] = (uint8_t) (h[7] >> 48);
-    hash[58] = (uint8_t) (h[7] >> 40);
-    hash[59] = (uint8_t) (h[7] >> 32);
-    hash[60] = (uint8_t) (h[7] >> 24);
-    hash[61] = (uint8_t) (h[7] >> 16);
-    hash[62] = (uint8_t) (h[7] >> 8);
-    hash[63] = (uint8_t) h[7];*/
-    
     
     // test if the result is conform to what i want
     
@@ -396,13 +367,13 @@ __kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *l
         results[x] = 0;
     }
     
-    /*if(valid){
+    if(valid){
         // so we go on with debug output
-        //printf("\nresulting hash: %d - %.10s\n", x, bits+(10*x));
+        printf("\nresulting hash: %d - %.12s\n", x, bits+(12*x));
         
-        for(int i=0; i<64; i++){
+        for(int i=0; i<56; i++){
             //printf("\n%d) value:\t%" PRIu8 " ", i, final[i]);
-            //printf("%x", hash[i]);
+            printf("%x", hash[i]);
             
             int size = sizeof(hash[i]);
              uint8_t byte;
@@ -419,7 +390,7 @@ __kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *l
         }
         
         //printf("\n");
-    }*/
+    }
     
 }
 

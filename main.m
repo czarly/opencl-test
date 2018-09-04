@@ -16,7 +16,7 @@
 #define ITEM_COUNT 90000//0
 #define START_COUNT 10000//00
 #define SUFFIX_COUNT 5
-#define TARGET 3
+#define TARGET 1
 #define bool char
 #define true 1
 #define false 0
@@ -294,14 +294,14 @@ void cl(const uint8_t *bits, const int *count, const uint8_t *length, const uint
         exit(1);
     }
     
-    ret = clSetKernelArg(kernel, 3, 64*sizeof(uint8_t), NULL);
+    /*ret = clSetKernelArg(kernel, 3, 64*sizeof(uint8_t), NULL);
     
     if (ret != CL_SUCCESS) {
         printf("Error: Failed to set the local array buffer! %d\n", ret);
         exit(1);
-    }
+    }*/
     
-    ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), (void *)&c_mem_obj);
+    ret = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&c_mem_obj);
     
     if (ret != CL_SUCCESS) {
         printf("Error: Failed to set kernel arg c! %d\n", ret);
