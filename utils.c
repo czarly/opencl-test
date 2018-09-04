@@ -115,31 +115,31 @@ uint8_t *prepareMessage1024(uint8_t *initial_msg, size_t initial_len, int *size)
  226  * append length of message (without the '1' bit or padding), in bits, as 128-bit big-endian integer
  227  * (this will make the entire post-processed length a multiple of 1024 bits)
  228  */
-/*void sha512_calc(const uint8_t *ptr, size_t chunk_ln, size_t final_len, hash_t *ctx)
+/*void sha384_calc(const uint8_t *ptr, size_t chunk_ln, size_t final_len, hash_t *ctx)
 {
          size_t offset;
          for (offset = 0; offset+128 <= chunk_ln; offset += 128)
-             sha512_128(ptr + offset, ctx);
+             sha384_128(ptr + offset, ctx);
          if (offset == chunk_ln && final_len == (size_t)-1)
              return;
          const int remain = chunk_ln - offset;
-         uint8_t sha512_buf[128];
+         uint8_t sha384_buf[128];
          if (remain)
-             memcpy(sha512_buf, ptr+offset, remain);
-         memset(sha512_buf+remain, 0, 128-remain);
+             memcpy(sha384_buf, ptr+offset, remain);
+         memset(sha384_buf+remain, 0, 128-remain);
          if (final_len == (size_t)-1) {
-             sha512_128(sha512_buf, ctx);
-             fprintf(stderr, "sha512: WARN: Incomplete block without EOF!\n");
+             sha384_128(sha384_buf, ctx);
+             fprintf(stderr, "sha384: WARN: Incomplete block without EOF!\n");
              return;
          }
          /* EOF */
-   /*      sha512_buf[remain] = 0x80;
+   /*      sha384_buf[remain] = 0x80;
          if (remain >= 112) {
-             sha512_128(sha512_buf, ctx);
-             memset(sha512_buf, 0, 116);
+             sha384_128(sha384_buf, ctx);
+             memset(sha384_buf, 0, 116);
          }
-         *(uint32_t*)(sha512_buf+116) = htonl(final_len >> 61);
-         *(uint32_t*)(sha512_buf+120) = htonl(final_len >> 29);
-         *(uint32_t*)(sha512_buf+124) = htonl(final_len <<  3);
-         sha512_128(sha512_buf, ctx);
+         *(uint32_t*)(sha384_buf+116) = htonl(final_len >> 61);
+         *(uint32_t*)(sha384_buf+120) = htonl(final_len >> 29);
+         *(uint32_t*)(sha384_buf+124) = htonl(final_len <<  3);
+         sha384_128(sha384_buf, ctx);
      }*/

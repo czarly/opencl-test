@@ -16,7 +16,7 @@
 #define ITEM_COUNT 90000//0
 #define START_COUNT 10000//00
 #define SUFFIX_COUNT 5
-#define TARGET 4
+#define TARGET 3
 #define bool char
 #define true 1
 #define false 0
@@ -58,7 +58,7 @@ int firstMatch(int* matches, int length){
 }
 
 void plain(char *msg, size_t len, uint8_t *result){
-    sha512_hash(msg, len, result);
+    sha384_hash(msg, len, result);
     
     /*for(int i=0; i<64; i++){
         printf("\n%d) value:\t%" PRIu8 " ", i, result[i]);
@@ -86,11 +86,11 @@ bool try(char *msg, int length, uint8_t *target){
     if (match > -1){
         
         // check result
-        uint8_t *hash = (uint8_t*)malloc(sizeof(uint8_t)*64);
+        uint8_t *hash = (uint8_t*)malloc(sizeof(uint8_t)*56);
         
         printf("check hash for match %d - %.12s\n", match, bits+(match * length));
         
-        sha512_hash(bits+(match * length), length, hash);
+        sha384_hash(bits+(match * length), length, hash);
         
         bool finished = success(hash, target);
         
@@ -128,9 +128,9 @@ void cl(const uint8_t *bits, const int *count, const uint8_t *length, const uint
     size_t source_size;
     
 #ifdef __APPLE__
-    char* kernel_path = "/Users/sebastian/repos/Xcode Workspace/OpenCL Test/OpenCL Test/sha512_kernel.cl";
+    char* kernel_path = "/Users/sebastian/repos/Xcode Workspace/OpenCL Test/OpenCL Test/sha384_kernel.cl";
 #else
-    char* kernel_path = "sha512_kernel.cl";
+    char* kernel_path = "sha384_kernel.cl";
 #endif
     
     fp = fopen(kernel_path, "r");
@@ -270,7 +270,7 @@ void cl(const uint8_t *bits, const int *count, const uint8_t *length, const uint
     }
     
     // Create the OpenCL kernel
-    cl_kernel kernel = clCreateKernel(program, "sha512_hash", &ret);
+    cl_kernel kernel = clCreateKernel(program, "sha384_hash", &ret);
     
     // Set the arguments of the kernel
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&a_mem_obj);

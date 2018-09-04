@@ -6,9 +6,9 @@
 #define true 1
 #define false 0
 
-void sha512_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *ctx);
-void sha512_128(__global const uint8_t* msg, uint64_t* ctx);
-void sha512_128_local(const uint8_t* msg, uint64_t* ctx);
+void sha384_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *ctx);
+void sha384_128(__global const uint8_t* msg, uint64_t* ctx);
+void sha384_128_local(const uint8_t* msg, uint64_t* ctx);
 uint64_t rot_right(uint64_t x, uint8_t c);
 uint64_t rot_left(uint64_t x, uint8_t c);
 
@@ -73,15 +73,13 @@ uint64_t rot_left(uint64_t x, uint8_t c){
  * (The initial values in w[0..79] don't matter, so many implementations zero them here)
  */
 
-void sha512_128(__global const uint8_t* msg, uint64_t* ctx)
+void sha384_128(__global const uint8_t* msg, uint64_t* ctx)
 {
     int i;
     /* for each chunk create a 80-entry message schedule array w[0..79] of 64-bit words */
     uint64_t w[80];
     
     /* copy chunk into first 16 words w[0..15] of the message schedule array */
-    /*for (i = 0; i < 16; ++i)
-        w[i] = htonll(*(uint64_t*)(msg+8*i));*/
     
     for (i = 0; i < 16; ++i){
         uint8_t buf[8] = {
@@ -95,7 +93,6 @@ void sha512_128(__global const uint8_t* msg, uint64_t* ctx)
             msg[8*i+7]
         };
         
-        // w[i] = htonll(*(uint64_t*)(msg+8*i));
         w[i] = htonll(*(uint64_t*)buf);
     }
     
@@ -132,7 +129,7 @@ void sha512_128(__global const uint8_t* msg, uint64_t* ctx)
 }
 
 
-void sha512_128_local(const uint8_t* msg, uint64_t* ctx)
+void sha384_128_local(const uint8_t* msg, uint64_t* ctx)
 {
     /* for each chunk create a 80-entry message schedule array w[0..79] of 64-bit words */
     uint64_t w[80] = { 0ULL << 63 };
@@ -150,7 +147,6 @@ void sha512_128_local(const uint8_t* msg, uint64_t* ctx)
             msg[8*i+7]
         };
         
-        // w[i] = htonll(*(uint64_t*)(msg+8*i));
         w[i] = htonll(*(uint64_t*)buf);
     }
 
@@ -195,89 +191,56 @@ void sha512_128_local(const uint8_t* msg, uint64_t* ctx)
  * (this will make the entire post-processed length a multiple of 1024 bits)
  */
 
-void sha512_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *ctx)
+void sha384_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *ctx)
 {
     unsigned int offset=0;
     
     // only important when the message doesn't fit in one chunk anymore.
     for (offset = 0; offset+128 <= final_len; offset += 128){
-        sha512_128(ptr + offset, ctx);
+        sha384_128(ptr + offset, ctx);
     }
 
     const int remain = final_len - offset;
     
-    uint8_t sha512_buf[128] = { 0 };
+    uint8_t sha384_buf[128] = { 0 };
     
-    //if (remain)
+    if (remain) {
         // i have a piece that was not 128 bits and still has to be processed
         // copy the remaining bits in the first places of a empty 128 bit buffer
-    //    memcpy(sha512_buf, ptr+offset, remain);
     
-    for(int k=0;k<remain;k++){
-        //printf("i copied a char %.1s\n", &ptr[offset+k]);
-        sha512_buf[k] = (uint8_t) *(ptr+(offset+k*sizeof(uint8_t)));
+        for(int k=0;k<remain;k++){
+            sha384_buf[k] = (uint8_t) *(ptr+(offset+k*sizeof(uint8_t)));
+        }
     }
-    //printf("remaining: %.10s\n",sha512_buf);
-    
-    // set the rest of the buffer to 0
-    // it's not really needed it think, but lets leave it in for now
-    // memset(sha512_buf+remain, 0, 128-remain);
-    
-    //gsus that looks stupid;
-    /*for(int z=remain;z<128-remain;z++){
-        sha512_buf[z] = 0;
-    }*/
-    
-    //printf("remaining then: %.13s\n",sha512_buf);
     
     // and go on here. we add our binary 1 as terminator and then we copy the length in the last place of the chunk
-    sha512_buf[remain] = 0x80;
+    sha384_buf[remain] = 0x80;
     
     // this is irrelevant for short payloads as well
     if (remain >= 112) {
-        //printf("my remain was huge");
+
         // if the remainder is too long to append the length after it in the same chunk we update the context 1 more round
-        sha512_128_local(sha512_buf, ctx);
+        sha384_128_local(sha384_buf, ctx);
+        
         // and 0 out the temporary buffer again up to the point where we wanna add the length information
-        //memset(sha512_buf, 0, 116);
         //gsus that looks stupid;
         for(int z=0;z<116;z++){
-            sha512_buf[z] = 0;
+            sha384_buf[z] = 0;
         }
     }
 
     
     // finally we add the lenght information
     // i had to know that upfront. in a way i don't need the chunk lenght really, or do i?
-    *(uint32_t*)(sha512_buf+116) = htonl(final_len >> 61);
-    *(uint32_t*)(sha512_buf+120) = htonl(final_len >> 29);
-    *(uint32_t*)(sha512_buf+124) = htonl(final_len <<  3);
-    
-    //printf("final len: %d\n", final_len);
-    
-    /*for(int i=0; i<128; i++){
-        //printf("\n%d) value:\t%" PRIu8 " ", i, final[i]);
-        //printf("%x", sha512_buf[i]);
-        
-        int size = sizeof(sha512_buf[i]);
-        uint8_t byte;
-        int i, j;
-        
-        for (i=size-1;i>=0;i--)
-        {
-            for (j=7;j>=0;j--)
-            {
-                byte = (sha512_buf[i] >> j) & 1;
-                //printf("%u", byte);
-            }
-        }
-    }*/
+    *(uint32_t*)(sha384_buf+116) = htonl(final_len >> 61);
+    *(uint32_t*)(sha384_buf+120) = htonl(final_len >> 29);
+    *(uint32_t*)(sha384_buf+124) = htonl(final_len <<  3);
     
     // and we'll update the context again, because this is what we want to output as the hash in the end.
-    sha512_128_local(sha512_buf, ctx);
+    sha384_128_local(sha384_buf, ctx);
 }
 
-__kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *length, __global const uint8_t *target, __global int *results){
+__kernel void sha384_hash(__global const uint8_t *bits, __global const size_t *length, __global const uint8_t *target, __global int *results){
     
     
     int x = get_global_id(0);
@@ -300,7 +263,7 @@ __kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *l
     
     size_t item_length = *length;
     
-    sha512_calc(bits + (x * item_length * sizeof(uint8_t)), item_length, h);
+    sha384_calc(bits + (x * item_length * sizeof(uint8_t)), item_length, h);
     
     uint8_t hash[64] = { 0 };
     
@@ -387,7 +350,7 @@ __kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *l
     
     return;
     
-    if(valid){
+    /*if(valid){
         // so we go on with debug output
         printf("\nresulting hash: %d - %.12s\n", x, bits+(12*x));
         
@@ -410,7 +373,7 @@ __kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *l
         }
         
         printf("\n");
-    }
+    }*/
     
 }
 

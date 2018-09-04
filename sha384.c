@@ -1,4 +1,4 @@
-#include "sha512.h"
+#include "sha384.h"
 
 #define uint32_t unsigned int
 #define uint64_t unsigned long long
@@ -65,7 +65,7 @@ uint64_t k[] ={
  * break message into 1024-bit chunks
  * (The initial values in w[0..79] don't matter, so many implementations zero them here)
  */
-void sha512_128(const uint8_t* msg, uint64_t* ctx)
+void sha384_128(const uint8_t* msg, uint64_t* ctx)
 {
     int i;
     /* for each chunk create a 80-entry message schedule array w[0..79] of 64-bit words */
@@ -115,44 +115,44 @@ void sha512_128(const uint8_t* msg, uint64_t* ctx)
  * append length of message (without the '1' bit or padding), in bits, as 128-bit big-endian integer
  * (this will make the entire post-processed length a multiple of 1024 bits)
  */
-void sha512_calc(const uint8_t *ptr, const size_t final_len, uint64_t *ctx)
+void sha384_calc(const uint8_t *ptr, const size_t final_len, uint64_t *ctx)
 {
     unsigned int offset;
     for (offset = 0; offset+128 <= final_len; offset += 128)
-        sha512_128(ptr + offset, ctx);
+        sha384_128(ptr + offset, ctx);
     
     const int remain = final_len - offset;
-    uint8_t sha512_buf[128];
+    uint8_t sha384_buf[128];
 
     if (remain)
         // i have a piece that was not 128 bits and still has to be processed
         // copy the remaining bits in the first places of a empty 128 bit buffer
-        memcpy(sha512_buf, ptr+offset, remain);
+        memcpy(sha384_buf, ptr+offset, remain);
     
     // set the rest of the buffer to 0
     // it's not really needed it think, but lets leave it in for now
-    memset(sha512_buf+remain, 0, 128-remain);
+    memset(sha384_buf+remain, 0, 128-remain);
     
     // and go on here. we add our binary 1 as terminator and then we copy the length in the last place of the chunk
-    sha512_buf[remain] = 0x80;
+    sha384_buf[remain] = 0x80;
     if (remain >= 112) {
         // if the remainder is too long to append the length after it in the same chunk we update the context 1 more round
-        sha512_128(sha512_buf, ctx);
+        sha384_128(sha384_buf, ctx);
         // and 0 out the temporary buffer again up to the point where we wanna add the length information
-        memset(sha512_buf, 0, 116);
+        memset(sha384_buf, 0, 116);
     }
     
     // finally we add the lenght information
     // i had to know that upfront. in a way i don't need the chunk lenght really, or do i?
-    *(uint32_t*)(sha512_buf+116) = htonl(final_len >> 61);
-    *(uint32_t*)(sha512_buf+120) = htonl(final_len >> 29);
-    *(uint32_t*)(sha512_buf+124) = htonl(final_len <<  3);
+    *(uint32_t*)(sha384_buf+116) = htonl(final_len >> 61);
+    *(uint32_t*)(sha384_buf+120) = htonl(final_len >> 29);
+    *(uint32_t*)(sha384_buf+124) = htonl(final_len <<  3);
     
     /*for(int i=0; i<128; i++){
         //printf("\n%d) value:\t%" PRIu8 " ", i, final[i]);
-        printf("%x", sha512_buf[i]);
+        printf("%x", sha384_buf[i]);
         
-        int size = sizeof(sha512_buf[i]);
+        int size = sizeof(sha384_buf[i]);
         uint8_t byte;
         int i, j;
         
@@ -160,17 +160,17 @@ void sha512_calc(const uint8_t *ptr, const size_t final_len, uint64_t *ctx)
         {
             for (j=7;j>=0;j--)
             {
-                byte = (sha512_buf[i] >> j) & 1;
+                byte = (sha384_buf[i] >> j) & 1;
                 //printf("%u", byte);
             }
         }
     }*/
     
     // and we'll update the context again, because this is what we want to output as the hash in the end.
-    sha512_128(sha512_buf, ctx);
+    sha384_128(sha384_buf, ctx);
 }
 
-void sha512_hash(const uint8_t *bits, const size_t length, uint8_t *hash) {
+void sha384_hash(const uint8_t *bits, const size_t length, uint8_t *hash) {
     
     //printf("start %d\n", *length);
     
@@ -196,7 +196,7 @@ void sha512_hash(const uint8_t *bits, const size_t length, uint8_t *hash) {
         0x47b5481dbefa4fa4
     };
     
-    sha512_calc(bits, length, h);
+    sha384_calc(bits, length, h);
     
     // you have your hash in *result...
     
