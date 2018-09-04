@@ -262,7 +262,7 @@ void sha512_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *
     sha512_128_local(sha512_buf, ctx);
 }
 
-__kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *length, __global const uint8_t *target, __local uint8_t *hash, __global int *results){
+__kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *length, __global const uint8_t *target, __local uint8_t *_hash, __global int *results){
     
     
     int x = get_global_id(0);
@@ -298,6 +298,8 @@ __kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *l
         0x47b5481dbefa4fa4
     };
     
+    
+    uint8_t hash[64];
     
     size_t item_length = *length;
 

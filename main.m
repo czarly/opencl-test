@@ -13,9 +13,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#define ITEM_COUNT 900000//0
-#define START_COUNT 100000//00
-#define SUFFIX_COUNT 6
+#define ITEM_COUNT 90000//0
+#define START_COUNT 10000//00
+#define SUFFIX_COUNT 5
 #define TARGET 3
 #define bool char
 #define true 1
@@ -88,14 +88,14 @@ bool try(char *msg, int length, uint8_t *target){
         // check result
         uint8_t *hash = (uint8_t*)malloc(sizeof(uint8_t)*64);
         
-        printf("check hash for match %d - %.13s\n", match, bits+(match * length));
+        printf("check hash for match %d - %.12s\n", match, bits+(match * length));
         
         sha512_hash(bits+(match * length), length, hash);
         
         bool finished = success(hash, target);
         
         if( finished ) {
-            for(int i=0; i<64; i++){
+            for(int i=0; i<56; i++){
                 printf("%x", hash[i]);
             }
         } else if (!finished) {
@@ -148,7 +148,7 @@ void cl(const uint8_t *bits, const int *count, const uint8_t *length, const uint
     cl_uint ret_num_devices;
     cl_uint ret_num_platforms;
     cl_int ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
-    ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_CPU, 1,
+    ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_GPU, 1,
                          &device_id, &ret_num_devices);
     
     // Get some information about the returned device
@@ -368,7 +368,7 @@ int main(void) {
     for (i=start; i<10*start; i++){
         char* buf[len+4];
         sprintf(buf, "%s%d", prefix, i);
-        result = try(buf, len+10, target);
+        result = try(buf, len+9, target);
         printf("\n\nfinished %d rounds \n", (i-start));
         if(result) break;
     }
