@@ -293,14 +293,7 @@ void cl(const uint8_t *bits, const int *count, const uint8_t *length, const uint
         printf("Error: Failed to set kernel arg b! %d\n", ret);
         exit(1);
     }
-    
-    /*ret = clSetKernelArg(kernel, 3, 64*sizeof(uint8_t), NULL);
-    
-    if (ret != CL_SUCCESS) {
-        printf("Error: Failed to set the local array buffer! %d\n", ret);
-        exit(1);
-    }*/
-    
+        
     ret = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&c_mem_obj);
     
     if (ret != CL_SUCCESS) {
