@@ -1,5 +1,5 @@
 #define uint32_t unsigned int
-#define uint64_t unsigned long long
+#define uint64_t unsigned long
 #define size_t unsigned int
 #define uint8_t unsigned char
 #define bool char
@@ -135,16 +135,7 @@ void sha512_128(__global const uint8_t* msg, uint64_t* ctx)
 void sha512_128_local(const uint8_t* msg, uint64_t* ctx)
 {
     /* for each chunk create a 80-entry message schedule array w[0..79] of 64-bit words */
-    uint64_t w[80] = {
-        0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,
-        0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,
-        0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,
-        0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,
-        0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,
-        0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,
-        0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,
-        0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63,0ULL << 63
-    };
+    uint64_t w[80] = { 0ULL << 63 };
     
     /* copy chunk into first 16 words w[0..15] of the message schedule array */
     for (int i = 0; i < 16; ++i){
@@ -171,7 +162,6 @@ void sha512_128_local(const uint8_t* msg, uint64_t* ctx)
         w[j] = w[j-16] + s0 + w[j-7] + s1;
     }
     
-    
     /* Initialize working variables to current hash value:*/
     uint64_t a = ctx[0], b = ctx[1], c = ctx[2], d = ctx[3];
     uint64_t e = ctx[4], f = ctx[5], g = ctx[6], h = ctx[7];
@@ -192,7 +182,6 @@ void sha512_128_local(const uint8_t* msg, uint64_t* ctx)
         d = c; c = b; b = a;
         a = temp1 + temp2;
     }
-    
     /* Add the compressed chunk to the current hash value: */
     ctx[0] += a; ctx[1] += b; ctx[2] += c; ctx[3] += d;
     ctx[4] += e; ctx[5] += f; ctx[6] += g; ctx[7] += h;
@@ -211,22 +200,13 @@ void sha512_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *
     unsigned int offset=0;
     
     // only important when the message doesn't fit in one chunk anymore.
-    /*for (offset = 0; offset+128 <= final_len; offset += 128){
+    for (offset = 0; offset+128 <= final_len; offset += 128){
         sha512_128(ptr + offset, ctx);
-    }*/
+    }
 
     const int remain = final_len - offset;
     
-    uint8_t sha512_buf[128] = {
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-    };
+    uint8_t sha512_buf[128] = { 0 };
     
     //if (remain)
         // i have a piece that was not 128 bits and still has to be processed
@@ -254,7 +234,7 @@ void sha512_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *
     sha512_buf[remain] = 0x80;
     
     // this is irrelevant for short payloads as well
-    /*if (remain >= 112) {
+    if (remain >= 112) {
         //printf("my remain was huge");
         // if the remainder is too long to append the length after it in the same chunk we update the context 1 more round
         sha512_128_local(sha512_buf, ctx);
@@ -264,7 +244,7 @@ void sha512_calc(__global const uint8_t *ptr, const size_t final_len, uint64_t *
         for(int z=0;z<116;z++){
             sha512_buf[z] = 0;
         }
-    }*/
+    }
 
     
     // finally we add the lenght information
@@ -318,20 +298,11 @@ __kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *l
         0x47b5481dbefa4fa4ULL
     };
     
-    uint8_t hash[] = {
-        0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0
-    };
-    
     size_t item_length = *length;
     
     sha512_calc(bits + (x * item_length * sizeof(uint8_t)), item_length, h);
+    
+    uint8_t hash[64] = { 0 };
     
     /* Produce the final hash value (big-endian): */
     hash[0] = (uint8_t) (h[0] >> 56);
@@ -412,6 +383,9 @@ __kernel void sha512_hash(__global const uint8_t *bits, __global const size_t *l
     } else {
         results[x] = 0;
     }
+    
+    
+    return;
     
     if(valid){
         // so we go on with debug output

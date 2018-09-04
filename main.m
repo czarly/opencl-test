@@ -16,7 +16,7 @@
 #define ITEM_COUNT 90000//0
 #define START_COUNT 10000//00
 #define SUFFIX_COUNT 5
-#define TARGET 1
+#define TARGET 4
 #define bool char
 #define true 1
 #define false 0
@@ -162,7 +162,7 @@ void cl(const uint8_t *bits, const int *count, const uint8_t *length, const uint
                     device_name, &returned_size);
     clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(device_name),
                     device_workgroup_size, &returned_size);
-    // printf("Connecting to %s %s %s...\n", vendor_name, device_name, device_workgroup_size);
+    printf("Connecting to %s %s %s...\n", vendor_name, device_name, device_workgroup_size);
     
     // Create an OpenCL context
     cl_context context = clCreateContext( NULL, 1, &device_id, NULL, NULL, &ret);
