@@ -375,6 +375,28 @@ void cl(const uint8_t *bits, const int *count, const uint8_t *length, const uint
     cleanupCl(&cto, ret);
 }
 
+bool tryPlain(char *msg, int length, uint8_t *target){
+    int count = ITEM_COUNT;
+    
+    uint8_t *bits = malloc(length*count*sizeof(uint8_t));
+    generateWords(msg, count, bits);
+
+    uint8_t *hash = (uint8_t*)malloc(sizeof(uint8_t)*56);
+    bool finished = false;
+    
+    for(int z=0; z<count;++z){
+        sha384_hash(bits+(z * length), length, hash);
+        
+        finished = success(hash, target);
+        if (finished) {
+            printf("have hash for match %d - %.12s\n", z, bits+(z * length));
+            break;
+        }
+    }
+    
+    return finished;
+}
+
 bool try(char *msg, int length, uint8_t *target, cl_object *cto, cl_int ret){
     
     // the length of each item to be hashed.
@@ -387,8 +409,8 @@ bool try(char *msg, int length, uint8_t *target, cl_object *cto, cl_int ret){
     
     int *matches = (int*)malloc(sizeof(int)*count);
     
-    //cl(bits,&count,&length,target,matches);
     performCl(bits, &count, &length, matches, cto, ret);
+    //performPlain(bits, &count, &length, target, matches);
     
     int match = firstMatch(matches, count);
     
@@ -457,7 +479,8 @@ int main(void) {
     for (i=start; i<10*start; i++){
         char* buf[len+4];
         sprintf(buf, "%s%d", prefix, i);
-        result = try(buf, len+9, target, &cto, ret);
+        //result = try(buf, length, target, &cto, ret);
+        result = tryPlain(buf, length, target);
         printf("\n\nfinished %d rounds \n", (i-start));
         if(result) break;
     }
